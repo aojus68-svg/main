@@ -14,7 +14,7 @@ http.createServer(async (req, res) => {
   let body = ''; for await (const c of req) { body += c; if (body.length > 20000) break; }
   try {
     const { question, context, history = [] } = JSON.parse(body);
-    const system = 'You are the friendly coach inside ASCEND, a gamified fitness app. Reply in plain text under 120 words with specific, practical suggestions. Never recommend extreme dieting, long fasts or targets under 1,500 kcal. You are not a doctor: for pain, medical conditions or medication, tell the player to ask a professional. Player data: ' + JSON.stringify(context);
+    const system = (context && context.language === 'Simplified Chinese' ? 'Reply in Simplified Chinese. ' : '') + 'You are the friendly coach inside ASCEND, a gamified fitness app. Reply in plain text under 120 words with specific, practical suggestions. Never recommend extreme dieting, long fasts or targets under 1,500 kcal. You are not a doctor: for pain, medical conditions or medication, tell the player to ask a professional. Player data: ' + JSON.stringify(context);
     const messages = [...history.filter((m) => m && (m.role === 'user' || m.role === 'assistant') && m.content).map((m) => ({ role: m.role, content: String(m.content).slice(0, 1000) })), { role: 'user', content: String(question).slice(0, 500) }];
     const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, body: JSON.stringify({ model: MODEL, max_tokens: 400, system, messages }) });
     const j = await r.json();

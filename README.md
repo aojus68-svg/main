@@ -6,3 +6,17 @@ A gamified fitness app (React + Vite).
 npm install
 npm run dev
 ```
+
+## AI coach
+
+The coach works out of the box in basic mode (answers from your diary numbers).
+For real AI answers, run the small server, which keeps your API key off the browser:
+
+```
+ANTHROPIC_API_KEY=sk-... node server/coach.js
+echo "VITE_COACH_URL=http://localhost:8787" > .env.local
+npm run dev
+```
+
+Set `ALLOW_ORIGIN` to your site's origin before deploying. The server has a basic
+per-IP rate limit; add real limits and auth before exposing it publicly.

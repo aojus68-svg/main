@@ -28,3 +28,4 @@ nav .fuel{width:64px;height:64px;border-radius:32px;background:var(--blue);borde
 input[type=text],input:not([type]){height:48px;border:1px solid #2E5BC0;border-radius:6px;background:var(--bg2);color:var(--text);font-size:16px;padding:0 12px;width:100%}
 .pill{min-height:44px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:transparent;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.06em}
 .pill.on{background:rgba(27,100,242,.3);border-color:var(--sky)}
+.ask{position:absolute;right:14px;bottom:88px;width:auto;height:44px;border-radius:22px;z-index:5;box-shadow:0 0 22px rgba(46,110,255,.5)}

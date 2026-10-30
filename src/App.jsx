@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { askCoach } from './coach.js';
 import { useGame } from './store.js';
 import { DAILY, FOODS, GATES, GOALS, MEALS, RANKS, rankOf, xpNeed } from './data.js';
 
@@ -114,14 +115,41 @@ function Profile({ s, dispatch }) {
   );
 }
 
+function Coach({ s }) {
+  const [turns, setTurns] = useState([]); const [q, setQ] = useState(''); const [busy, setBusy] = useState(false);
+  const send = async (text) => {
+    text = text.trim().slice(0, 500); if (!text || busy) return;
+    const history = turns.map((t) => ({ role: t.role, content: t.text }));
+    setTurns((t) => [...t, { role: 'user', text }]); setQ(''); setBusy(true);
+    const a = await askCoach(text, s, history);
+    setTurns((t) => [...t, { role: 'assistant', text: a.text, ai: a.ai }]); setBusy(false);
+  };
+  return (
+    <div className="scroll">
+      <Header label="AI COACH" title="ASK ME" />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{['Review my day', 'What should I eat next?', 'Plan my next workout'].map((c) => <button key={c} className="pill" onClick={() => send(c)}>{c}</button>)}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} aria-live="polite">
+        {turns.map((t, i) => <div key={i} className="panel" style={{ alignSelf: t.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', whiteSpace: 'pre-wrap' }}><span className="mono mute">{t.role === 'user' ? 'YOU' : t.ai ? 'COACH (AI)' : 'COACH'}</span>{t.text}</div>)}
+        {busy && <div className="mute">Thinking...</div>}
+      </div>
+      <form className="row" onSubmit={(e) => { e.preventDefault(); send(q); }}>
+        <input aria-label="Message" maxLength={500} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about food, training, sleep" />
+        <button className="btn" style={{ width: 'auto' }} disabled={busy}>SEND</button>
+      </form>
+      <div className="mute">Replies are not medical advice. {import.meta.env.VITE_COACH_URL ? '' : 'Basic mode: answers use your diary numbers. See README to enable the AI coach.'}</div>
+    </div>
+  );
+}
+
 export default function App() {
   const [s, dispatch] = useGame(); const [tab, setTab] = useState('home');
   if (!s.started) return <div className="app"><Awaken dispatch={dispatch} /></div>;
-  const View = { home: Home, quests: Quests, fuel: Fuel, dungeons: Dungeons, profile: Profile }[tab];
+  const View = { home: Home, quests: Quests, fuel: Fuel, dungeons: Dungeons, profile: Profile, coach: Coach }[tab];
   return (
     <div className="app">
       {s.toast && <div className={'toast ' + s.toast.k} role="status">{s.toast.t}</div>}
       <View s={s} dispatch={dispatch} />
+      {tab !== 'coach' && <button className="btn ask" aria-label="Ask the AI coach" onClick={() => setTab('coach')}>ASK COACH</button>}
       <nav aria-label="Primary">{[['home', 'HOME'], ['quests', 'QUESTS'], ['fuel', 'FUEL'], ['dungeons', 'GATES'], ['profile', 'YOU']].map(([k, l]) => <button key={k} className={(tab === k ? 'on ' : '') + (k === 'fuel' ? 'fuel' : '')} onClick={() => setTab(k)}>{l}</button>)}</nav>
     </div>
   );

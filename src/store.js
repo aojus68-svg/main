@@ -11,7 +11,7 @@ const fresh = () => ({
   sleep: { today: null, log: [], rest: false }, rec: 0, body: [], prog: null, recipes: [], plan: [[], [], [], [], [], [], []], shopDone: {},
   sync: { health: false, watch: false, run: false }, syncedDay: { health: false, watch: false, run: false }, lastSync: 0, tour: 0,
   c: { dungeons: 0, quests: 0, volume: 0, prs: 0 }, maxStreak: 0, best: {}, allies: [], booster: 0, shield: 0, hidden: {}, flags: {}, pq: null,
-  log: [], hist: [], today: { vol: 0, xp: 0 }, guildClaimed: false, showLb: true, title: 'rookie', custom: []
+  log: [], hist: [], products: {}, scans: 0, today: { vol: 0, xp: 0 }, guildClaimed: false, showLb: true, title: 'rookie', custom: []
 });
 
 export const progOf = (s) => (s.prog ? PROGRAMS.find((p) => p.id === s.prog.id) || null : null);
@@ -149,6 +149,15 @@ export function reducer(st, a) {
       if (s.custom.length >= 6) { say(s, '[LIMIT] You can keep 6 custom dungeons. Delete one first.', 'bad'); break; }
       s.custom.push({ id: 'cu' + Date.now(), rank: 'MY', name: x.name.trim(), sub: `${x.ex.length} exercises · custom`, minLevel: 1, xp: 40, gold: 20, ex: x.ex });
       logEv(s, 'dungeon', `Built dungeon: ${x.name.trim()}`); say(s, `[DUNGEON CREATED] ${x.name.trim()}`); break; }
+    case 'prodSave': {
+      const code = String(a.code).replace(/\D/g, ''); const it = a.item;
+      if (code.length < 6 || code.length > 14) { say(s, '[ERROR] A barcode has 6 to 14 digits.', 'bad'); break; }
+      if (!it.name.trim() || !(it.kcal >= 0 && it.kcal <= 3000) || !(it.p >= 0 && it.p <= 300)) { say(s, '[ERROR] Enter a name, calories (0 to 3000) and protein (0 to 300 g).', 'bad'); break; }
+      if (Object.keys(s.products).length >= 200 && !s.products[code]) { say(s, '[LIMIT] 200 saved products. Delete one first.', 'bad'); break; }
+      s.products[code] = { name: it.name.trim().slice(0, 60), brand: 'MY PRODUCT', serving: (it.serving || '1 serving').slice(0, 30), kcal: Math.round(it.kcal), p: Math.round(it.p * 10) / 10 };
+      say(s, `[SAVED] ${it.name.trim()} is now in your product database.`, 'info'); break; }
+    case 'prodDel': delete s.products[a.code]; break;
+    case 'scanned': s.scans += 1; break;
     case 'dDel': s.custom = s.custom.filter((c) => c.id !== a.id); break;
     case 'clearToast': s.toast = null; return s;
     default: return st;

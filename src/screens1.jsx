@@ -127,6 +127,7 @@ export function Fuel({ s, dispatch, go, lang }) {
       <div className="grid2">
         <button className="btn2" onClick={() => go('voice')}>{t('VOICE LOG')}</button>
         <button className="btn2" onClick={() => go('photo')}>{t('PHOTO SCAN')}</button>
+        <button className="btn2" onClick={() => go('scan')}>{t('SCAN BARCODE')}</button>
         <button className="btn2" onClick={() => go('recipes')}>{t('RECIPES')}</button>
       </div>
       <section className="panel"><div className="row"><span className="lbl">[ {t('WATER')} ]</span><span className="mono">{s.water} / 8 {t('cups')}</span></div>

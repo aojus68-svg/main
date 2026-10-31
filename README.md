@@ -26,3 +26,9 @@ Needs the coach server: `ANTHROPIC_API_KEY=... node server/coach.js`, then set `
 
 ## Not included
 Barcode scanning uses the browser BarcodeDetector API (Chrome and Android). Other browsers get a type-the-number box. Built-in products live in `src/products.json`; add yours there, or save unknown barcodes in the app (stored on the device).
+
+## Run it in Visual Studio Code
+1. Install Node.js 18+ from nodejs.org.
+2. In VS Code: File > Open Folder > this folder. Open the terminal (Terminal > New Terminal).
+3. `npm install`
+4. `npm run dev` then open the address it prints (usually http://localhost:5173).

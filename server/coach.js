@@ -11,7 +11,19 @@ http.createServer(async (req, res) => {
   const ip = req.socket.remoteAddress; const now = Date.now(); const h = (hits.get(ip) || []).filter((t) => now - t < 60000);
   if (h.length >= 20) { res.writeHead(429, CORS); return res.end('{"error":"rate_limited"}'); }
   hits.set(ip, [...h, now]);
-  let body = ''; for await (const c of req) { body += c; if (body.length > 20000) break; }
+  let body = ''; for await (const c of req) { body += c; if (body.length > 900000) break; }
+  if (req.url === '/photo') {
+    try {
+      const { image } = JSON.parse(body); const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(image || '');
+      if (!m) { res.writeHead(400, CORS); return res.end('{"error":"bad_image"}'); }
+      const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, body: JSON.stringify({ model: MODEL, max_tokens: 500,
+        system: 'You estimate calories from a meal photo. Reply with ONLY JSON: {"items":[{"name":string,"kcal":number,"p":number}]} listing each visible food with a typical portion estimate. If no food is visible reply {"items":[]}.',
+        messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } }, { type: 'text', text: 'Estimate this meal.' }] }] }) });
+      const j = await r.json(); const txt = j.content?.[0]?.text || '{}'; const items = (JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)).items || []).slice(0, 8)
+        .map((x) => ({ name: String(x.name).slice(0, 60), kcal: Math.max(0, Math.min(2000, Math.round(+x.kcal || 0))), p: Math.max(0, Math.min(200, Math.round((+x.p || 0) * 10) / 10)) }));
+      res.writeHead(200, CORS); return res.end(JSON.stringify({ items }));
+    } catch { res.writeHead(502, CORS); return res.end('{"error":"scan_failed"}'); }
+  }
   try {
     const { question, context, history = [] } = JSON.parse(body);
     const system = (context && context.language === 'Simplified Chinese' ? 'Reply in Simplified Chinese. ' : '') + 'You are the friendly coach inside ASCEND, a gamified fitness app. Reply in plain text under 120 words with specific, practical suggestions. Never recommend extreme dieting, long fasts or targets under 1,500 kcal. You are not a doctor: for pain, medical conditions or medication, tell the player to ask a professional. Player data: ' + JSON.stringify(context);

@@ -72,3 +72,49 @@ export const PARQ = [
   'Has a doctor ever said you have a heart condition, or that you should only exercise under medical supervision?',
   'Does a doctor currently prescribe medication for blood pressure, or do you have a bone or joint problem that exercise could make worse?'
 ];
+
+// ---- Hunter log, guild, builder, hidden quests, allies, titles, shop ----
+GATES.splice(1, 0, { id: 'k1', rank: 'E', name: 'Pulse Trial', sub: 'Cardio intervals, no weights', minLevel: 1, xp: 70, gold: 35, ex: [
+  { n: 'Interval sprints', sets: 6, reps: 30, unit: 'sec', bw: true }, { n: 'Jump rope', sets: 4, reps: 60, unit: 'sec', bw: true }, { n: 'Burpees', sets: 3, reps: 10, bw: true }] });
+GATES.push({ id: 'boss', rank: 'BOSS', name: 'Gate Boss', sub: 'Weekly full-body showdown', minLevel: 8, xp: 400, gold: 150, ex: [
+  { n: 'Back squat', sets: 5, reps: 5, w: 70, step: 5 }, { n: 'Bench press', sets: 5, reps: 5, w: 50, step: 2.5 }, { n: 'Barbell row', sets: 5, reps: 5, w: 50, step: 2.5 }, { n: 'Overhead press', sets: 3, reps: 8, w: 30, step: 2.5 }] });
+export const GROUPS = ['All', 'Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Cardio'];
+export const LIB = [
+  { n: 'Bench press', g: 'Chest', w: 40, step: 2.5 }, { n: 'Incline dumbbell press', g: 'Chest', w: 14, step: 2 }, { n: 'Push-ups', g: 'Chest', bw: true, reps: 15 }, { n: 'Cable fly', g: 'Chest', w: 15, step: 2.5 },
+  { n: 'Deadlift', g: 'Back', w: 60, step: 5 }, { n: 'Barbell row', g: 'Back', w: 40, step: 2.5 }, { n: 'Lat pulldown', g: 'Back', w: 45, step: 2.5 }, { n: 'Seated cable row', g: 'Back', w: 40, step: 2.5 }, { n: 'Pull-ups', g: 'Back', bw: true, reps: 6 },
+  { n: 'Back squat', g: 'Legs', w: 60, step: 5 }, { n: 'Romanian deadlift', g: 'Legs', w: 50, step: 5 }, { n: 'Leg press', g: 'Legs', w: 100, step: 10 }, { n: 'Walking lunges', g: 'Legs', w: 10, step: 2 }, { n: 'Calf raise', g: 'Legs', w: 40, step: 5 },
+  { n: 'Overhead press', g: 'Shoulders', w: 25, step: 2.5 }, { n: 'Lateral raise', g: 'Shoulders', w: 6, step: 1 }, { n: 'Face pull', g: 'Shoulders', w: 20, step: 2.5 },
+  { n: 'Biceps curl', g: 'Arms', w: 12, step: 2 }, { n: 'Hammer curl', g: 'Arms', w: 10, step: 2 }, { n: 'Triceps pushdown', g: 'Arms', w: 20, step: 2.5 }, { n: 'Skull crusher', g: 'Arms', w: 20, step: 2.5 },
+  { n: 'Plank', g: 'Core', bw: true, unit: 'sec', reps: 45 }, { n: 'Hanging knee raise', g: 'Core', bw: true, reps: 12 }, { n: 'Cable crunch', g: 'Core', w: 30, step: 2.5 }, { n: 'Russian twist', g: 'Core', bw: true, reps: 20 },
+  { n: 'Interval sprints', g: 'Cardio', bw: true, unit: 'sec', reps: 30 }, { n: 'Jump rope', g: 'Cardio', bw: true, unit: 'sec', reps: 60 }, { n: 'Burpees', g: 'Cardio', bw: true, reps: 10 }, { n: 'Rowing machine', g: 'Cardio', bw: true, unit: 'sec', reps: 120 }, { n: 'Mountain climbers', g: 'Cardio', bw: true, unit: 'sec', reps: 40 }
+];
+export const HIDDEN = [
+  { id: 'h_early', name: 'Early Riser', hint: 'Hint: the System rewards those who train before the sun.', req: 'Train before 7 AM', ok: (s) => !!s.flags.early },
+  { id: 'h_night', name: 'Night Owl', hint: 'Hint: some hunters train when the world sleeps.', req: 'Train after 10 PM', ok: (s) => !!s.flags.night },
+  { id: 'h_streak', name: 'Unbroken', hint: 'Hint: show up again, and again, and again.', req: 'Reach a 3-day streak', ok: (s) => s.maxStreak >= 3 },
+  { id: 'h_boss', name: 'Boss Slayer', hint: 'Hint: face the Gate Boss.', req: 'Clear the Gate Boss', ok: (s) => !!s.flags.boss },
+  { id: 'h_heavy', name: 'Heavy Lifter', hint: 'Hint: one session, a lot of iron.', req: 'Lift 1,000 kg in one dungeon', ok: (s) => !!s.flags.heavy }
+];
+export const ALLIES = [
+  { id: 'ember', name: 'Ember Wisp', req: 'Clear 3 dungeons', stat: 'dungeons', goal: 3, bonus: 3 },
+  { id: 'hound', name: 'Dawn Hound', req: 'Complete 10 quests', stat: 'quests', goal: 10, bonus: 4 },
+  { id: 'warden', name: 'Iron Warden', req: 'Lift 3,000 kg in total', stat: 'volume', goal: 3000, bonus: 5 },
+  { id: 'sentinel', name: 'Night Sentinel', req: 'Reach a 7-day streak', stat: 'streak', goal: 7, bonus: 5 }
+];
+export const TITLES = [
+  { id: 'rookie', name: 'Newly Awakened', req: 'Start your journey', ok: () => true },
+  { id: 'iron', name: 'Iron Will', req: 'Clear 1 dungeon', ok: (s) => s.c.dungeons >= 1 },
+  { id: 'record', name: 'Record Setter', req: 'Set 1 personal record', ok: (s) => s.c.prs >= 1 },
+  { id: 'early', name: 'Early Riser', req: 'Complete 8 quests', ok: (s) => s.c.quests >= 8 },
+  { id: 'breaker', name: 'Dungeon Breaker', req: 'Clear 5 dungeons', ok: (s) => s.c.dungeons >= 5 },
+  { id: 'unbroken', name: 'Unbroken', req: 'Reach a 3-day streak', ok: (s) => s.maxStreak >= 3 }
+];
+export const NPCS = [
+  { n: 'KAIRA', lv: 22, xp: 3400, vol: 18200, st: 21 }, { n: 'VOSS', lv: 19, xp: 2900, vol: 15400, st: 12 }, { n: 'MIRELLE', lv: 17, xp: 2450, vol: 9800, st: 30 },
+  { n: 'TOBIAS', lv: 14, xp: 1900, vol: 12100, st: 6 }, { n: 'ANSEL', lv: 11, xp: 1500, vol: 7300, st: 9 }, { n: 'DREN', lv: 9, xp: 1100, vol: 5200, st: 4 }, { n: 'YUNA', lv: 6, xp: 700, vol: 3000, st: 2 }
+];
+export const G_GOAL = 75; export const G_BASE = 68;
+export const SHOP = [
+  { id: 'booster', name: 'XP Booster', desc: '+50% XP on your next 5 awards', price: 120 },
+  { id: 'shield', name: 'Streak Shield', desc: 'Blocks one missed-day penalty', price: 200 }
+];

@@ -6,7 +6,7 @@ import { useT, localeOf } from './i18n.jsx';
 import { askCoach } from './coach.js';
 
 const TILES = [
-  ['TRAIN', [['programs', 'Programs', '4-week plans', '#38D6F2', <path key="a" d="M4 7h16v13H4zM4 11h16M9 4v4M15 4v4" />]]],
+  ['TRAIN', [['log', 'Hunter log', 'Charts and events', '#A98BFF', <path key="l" d="M4 20V10M10 20V4M16 20v-7M22 20H2" />], ['guild', 'Guild', 'Goal and ranks', '#B7A3FF', <path key="g" d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />], ['shop', 'Shop', 'Allies and titles', '#F2C14E', <path key="s" d="M4 7h16l-1 13H5zM9 7a3 3 0 016 0" />], ['programs', 'Programs', '4-week plans', '#38D6F2', <path key="a" d="M4 7h16v13H4zM4 11h16M9 4v4M15 4v4" />]]],
   ['BODY AND FOOD', [
     ['sleep', 'Sleep', 'Rest and recovery', '#8CC4FF', <path key="a" d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" />],
     ['body', 'Body', 'Measure and photos', '#FF8FB1', <path key="a" d="M3 12h18M6 8v8M18 8v8M9 10v4M15 10v4" />],

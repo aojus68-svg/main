@@ -1,3 +1,4 @@
+import { PenaltyCard, HiddenList } from './screens3.jsx';
 import { useState } from 'react';
 import { DAILY, FOODS, GOALS, MEALS, PARQ, RANKS, TOUR, rankOf, xpNeed } from './data.js';
 import { allGates, progOf, progSession, target } from './store.js';
@@ -65,6 +66,7 @@ export function Quests({ s, dispatch }) {
   return (
     <div className="scroll">
       <Header label="QUEST BOARD" title="DAILY QUESTS" />
+      <PenaltyCard s={s} dispatch={dispatch} />
       {DAILY.map((q) => {
         const cur = q.id === 'protein' ? Math.round(s.qp.protein || 0) : s.qp[q.id] || 0; const tgt = q.id === 'protein' ? GOALS[s.goal].p : q.target;
         return (
@@ -76,6 +78,7 @@ export function Quests({ s, dispatch }) {
           </section>
         );
       })}
+      <HiddenList s={s} />
     </div>
   );
 }
@@ -123,6 +126,7 @@ export function Fuel({ s, dispatch, go, lang }) {
         <div className="note">{t('PROTEIN')} {Math.round(tot.p)} / {GOALS[s.goal].p} g</div></section>
       <div className="grid2">
         <button className="btn2" onClick={() => go('voice')}>{t('VOICE LOG')}</button>
+        <button className="btn2" onClick={() => go('photo')}>{t('PHOTO SCAN')}</button>
         <button className="btn2" onClick={() => go('recipes')}>{t('RECIPES')}</button>
       </div>
       <section className="panel"><div className="row"><span className="lbl">[ {t('WATER')} ]</span><span className="mono">{s.water} / 8 {t('cups')}</span></div>
@@ -186,14 +190,15 @@ export function Voice({ s, dispatch, go, lang }) {
   );
 }
 
-export function Dungeons({ s, dispatch }) {
+export function Dungeons({ s, dispatch, go }) {
   const t = useT();
   if (s.wk) {
     const g = s.wk.snap;
     return (
       <div className="scroll">
         <Header label="ACTIVE DUNGEON" title={g.name.toUpperCase()} />
-        {s.wk.ex.map((e, i) => <section key={e.n + i} className="panel"><div className="row"><b>{t(e.n)}</b><span className="mono mute">{e.bw ? '' : `${e.w} kg · `}{e.reps} {e.unit === 'sec' ? 'sec' : t('reps')}</span></div>
+        {s.wk.ex.map((e, i) => <section key={e.n + i} className="panel"><div className="row"><b>{t(e.n)}</b><span className="mono mute">{e.reps} {e.unit === 'sec' ? 'sec' : t('reps')}</span></div>
+          {!e.bw && <div className="row" style={{ justifyContent: 'center', gap: 14 }}><button className="step" aria-label={t('Lighter')} disabled={e.done >= e.sets} onClick={() => dispatch({ type: 'wt', i, d: -1 })}>−</button><b className="raj" style={{ fontSize: 24 }}>{e.w} kg{e.pr ? ' ★' : ''}</b><button className="step" aria-label={t('Heavier')} disabled={e.done >= e.sets} onClick={() => dispatch({ type: 'wt', i, d: 1 })}>+</button></div>}
           <div className="row"><span className="mono">{e.done} / {e.sets} {t('SETS').toLowerCase()}</span><button className="btn inline" disabled={e.done >= e.sets} onClick={() => dispatch({ type: 'set', i })}>{t('LOG SET')}</button></div></section>)}
         <button className="btn2" onClick={() => dispatch({ type: 'leave' })}>{s.wk.done ? t('BACK TO GATES') : t('RETREAT')}</button>
       </div>
@@ -204,11 +209,13 @@ export function Dungeons({ s, dispatch }) {
     <div className="scroll">
       <Header label="DUNGEON GATES" title="DUNGEONS" />
       {P && <div className="note">{t('Program')}: {t(P.name)} · {t(progSession(P, Math.min(s.prog.done, 11)).label)}</div>}
+      <button className="btn2" onClick={() => go('builder')}>{t('BUILD YOUR OWN DUNGEON')}</button>
       {allGates(s).map((g) => { const lock = s.level < g.minLevel; return (
         <section key={g.id} className="panel" style={{ opacity: lock ? 0.7 : 1, borderColor: g.id === 'prog' ? 'var(--sky)' : undefined }}>
           <div className="row"><span className="raj" style={{ fontSize: 20 }}>{g.rank} · {t(g.name)}</span><span className="mono mute">+{g.xp} XP</span></div>
           <div className="mute">{t(g.sub)}: {g.ex.map((e) => t(e.n)).join(', ')}</div>
           {lock ? <div className="mute">{t('LOCKED. Reach Level')} {g.minLevel}.</div> : <button className="btn" onClick={() => dispatch({ type: 'enter', g })}>{t('ENTER')}</button>}
+          {g.rank === 'MY' && <button className="link danger" onClick={() => dispatch({ type: 'dDel', id: g.id })}>{t('Delete dungeon')}</button>}
         </section>); })}
     </div>
   );

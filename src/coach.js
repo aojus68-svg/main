@@ -46,3 +46,14 @@ export async function askCoach(q, s, history, lang) {
   }
   return { text: localCoach(q, s, lang), ai: false };
 }
+
+// Photo meal scan. Needs the coach server (VITE_COACH_URL); returns {items} or {error}.
+export async function scanPhoto(dataUrl) {
+  const url = import.meta.env.VITE_COACH_URL;
+  if (!url) return { error: 'off' };
+  try {
+    const r = await fetch(url.replace(/\/$/, '') + '/photo', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ image: dataUrl }) });
+    if (!r.ok) return { error: 'failed' };
+    const j = await r.json(); return { items: Array.isArray(j.items) ? j.items : [] };
+  } catch { return { error: 'failed' }; }
+}

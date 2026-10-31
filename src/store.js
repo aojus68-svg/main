@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react';
-import { DAILY, GATES, GOALS, PROGRAMS, PROG_WEEKS, RECIPES, SYNC_SOURCES, xpNeed } from './data.js';
+import { TITLES, SHOP, ALLIES, DAILY, G_BASE, G_GOAL, GATES, HIDDEN, LIB, GOALS, PROGRAMS, PROG_WEEKS, RECIPES, SYNC_SOURCES, xpNeed } from './data.js';
 
 const KEY = 'ascend-react-v2';
 export const MIN_KCAL = 1500; export const MAX_KCAL = 4500;
@@ -9,7 +9,9 @@ const fresh = () => ({
   started: false, name: '', goal: 'muscle', level: 1, xp: 0, gold: 0, streak: 0, qp: {}, qDone: {}, food: [], water: 0, waterDone: false,
   wk: null, cleared: 0, toast: null, ageOk: false, kcalAdj: 0, exLog: [], diaryDone: false, archive: [], weights: [],
   sleep: { today: null, log: [], rest: false }, rec: 0, body: [], prog: null, recipes: [], plan: [[], [], [], [], [], [], []], shopDone: {},
-  sync: { health: false, watch: false, run: false }, syncedDay: { health: false, watch: false, run: false }, lastSync: 0, tour: 0
+  sync: { health: false, watch: false, run: false }, syncedDay: { health: false, watch: false, run: false }, lastSync: 0, tour: 0,
+  c: { dungeons: 0, quests: 0, volume: 0, prs: 0 }, maxStreak: 0, best: {}, allies: [], booster: 0, shield: 0, hidden: {}, flags: {}, pq: null,
+  log: [], hist: [], today: { vol: 0, xp: 0 }, guildClaimed: false, showLb: true, title: 'rookie', custom: []
 });
 
 export const progOf = (s) => (s.prog ? PROGRAMS.find((p) => p.id === s.prog.id) || null : null);
@@ -19,26 +21,35 @@ export function progGate(s) {
   const ss = progSession(P, Math.min(s.prog.done, PROG_WEEKS * 3 - 1));
   return { id: 'prog', rank: 'PLAN', name: `${P.name}: ${ss.day.name}`, sub: ss.label, minLevel: 1, xp: 100, gold: 45, ex: ss.day.ex };
 }
-export const allGates = (s) => [progGate(s), ...GATES].filter(Boolean);
+export const allGates = (s) => [progGate(s), ...GATES, ...s.custom].filter(Boolean);
 export const allRecipes = (s) => [...RECIPES, ...s.recipes];
 
 const say = (s, t, k = 'good') => { s.toast = { t, k }; };
-const gain = (s, n) => {
+const logEv = (s, k, t) => { s.log.unshift({ k, t, at: Date.now() }); if (s.log.length > 60) s.log.length = 60; };
+const timeFlags = (s) => { const h = new Date().getHours(); if (h < 7) s.flags.early = true; if (h >= 22) s.flags.night = true; };
+export const allyBonus = (s) => ALLIES.reduce((a, x) => a + (s.allies.includes(x.id) ? x.bonus : 0), 0);
+export const statVal = (s, k) => (k === 'streak' ? s.maxStreak : s.c[k]);
+const gain = (s, base) => {
+  let mult = 1 + allyBonus(s) / 100; if (s.booster > 0) { mult += 0.5; s.booster -= 1; }
+  const n = Math.max(1, Math.round(base * mult)); s.today.xp += n;
   s.xp += n;
-  while (s.xp >= xpNeed(s.level)) { s.xp -= xpNeed(s.level); s.level += 1; say(s, `LEVEL UP! You are now level ${s.level}`); }
+  while (s.xp >= xpNeed(s.level)) { s.xp -= xpNeed(s.level); s.level += 1; say(s, `LEVEL UP! You are now level ${s.level}`); logEv(s, 'level', `Reached Level ${s.level}`); }
 };
 const sync = (s) => {
+  if (s.streak > s.maxStreak) s.maxStreak = s.streak;
   const g = GOALS[s.goal]; const p = s.food.reduce((a, f) => a + f.p, 0);
   s.qp.meals = new Set(s.food.map((f) => f.meal)).size; s.qp.protein = p;
   DAILY.forEach((q) => {
     if (s.qDone[q.id]) return;
     const done = q.id === 'protein' ? p >= g.p : (s.qp[q.id] || 0) >= q.target;
-    if (done) { s.qDone[q.id] = true; gain(s, q.xp); s.gold += q.gold; say(s, `[QUEST COMPLETE] ${q.name}  +${q.xp} XP`); }
+    if (done) { s.qDone[q.id] = true; s.c.quests += 1; gain(s, q.xp); s.gold += q.gold; say(s, `[QUEST COMPLETE] ${q.name}  +${q.xp} XP`); }
   });
+  ALLIES.forEach((a) => { if (!s.allies.includes(a.id) && statVal(s, a.stat) >= a.goal) { s.allies.push(a.id); logEv(s, 'ally', `${a.name} joined your party`); say(s, `[ALLY JOINED] ${a.name}  +${a.bonus}% XP`); } });
+  HIDDEN.forEach((h) => { if (!s.hidden[h.id] && h.ok(s)) { s.hidden[h.id] = true; s.gold += 60; gain(s, 150); logEv(s, 'quest', `Hidden quest cleared: ${h.name}`); say(s, `[HIDDEN QUEST] ${h.name}  +150 XP  +60 gold`); } });
 };
 const addFood = (s, meal, it) => { s.food.push({ id: Date.now() + Math.random(), meal, name: it.name, kcal: Math.round(it.kcal), p: Math.round(it.p * 10) / 10 }); };
 
-function reducer(st, a) {
+export function reducer(st, a) {
   if (a.type === 'reset') return fresh();
   const s = JSON.parse(JSON.stringify(st));
   switch (a.type) {
@@ -60,11 +71,19 @@ function reducer(st, a) {
     case 'weight':
       if (!(a.kg >= 30 && a.kg <= 300)) { say(s, '[ERROR] Enter a weight between 30 and 300 kg.', 'bad'); break; }
       s.weights.push({ kg: Math.round(a.kg * 10) / 10, t: Date.now() }); if (s.weights.length > 60) s.weights.shift(); say(s, `[WEIGHT LOGGED] ${a.kg.toFixed(1)} kg`); break;
-    case 'enter': s.wk = { gid: a.g.id, snap: a.g, ex: a.g.ex.map((e) => ({ ...e, done: 0 })), done: false }; break;
+    case 'enter': s.wk = { gid: a.g.id, snap: a.g, vol: 0, prs: 0, ex: a.g.ex.map((e) => ({ ...e, w: s.best[e.n] || e.w || 0, step: e.step || 2.5, done: 0, pr: false })), done: false }; break;
+    case 'wt': { const e = s.wk.ex[a.i]; e.w = Math.max(0, Math.round((e.w + a.d * e.step) * 10) / 10); break; }
     case 'set': {
-      const e = s.wk.ex[a.i]; if (e.done < e.sets) e.done += 1; gain(s, 8);
+      const e = s.wk.ex[a.i]; if (e.done >= e.sets) break; e.done += 1; timeFlags(s); gain(s, 8);
+      if (!e.bw) {
+        s.wk.vol += e.w * e.reps; s.today.vol += e.w * e.reps; s.c.volume += e.w * e.reps; const b = s.best[e.n];
+        if (b !== undefined && e.w > b && !e.pr) { e.pr = true; s.wk.prs += 1; s.c.prs += 1; logEv(s, 'pr', `New record: ${e.n} ${e.w} kg`); say(s, `[NEW RECORD] ${e.n} ${e.w} kg`); }
+        if (b === undefined || e.w > b) s.best[e.n] = e.w;
+      }
       if (s.wk.ex.every((x) => x.done >= x.sets) && !s.wk.done) {
-        const g = s.wk.snap; gain(s, g.xp); s.gold += g.gold; s.cleared += 1; s.wk.done = true;
+        const g = s.wk.snap; gain(s, g.xp + 50 * s.wk.prs); s.gold += g.gold; s.cleared += 1; s.c.dungeons += 1; s.wk.done = true;
+        if (g.id === 'boss') s.flags.boss = true; if (s.wk.vol >= 1000) s.flags.heavy = true;
+        logEv(s, 'dungeon', `Cleared ${g.name} (${Math.round(s.wk.vol)} kg lifted)`);
         s.exLog.push({ id: Date.now(), name: `Dungeon: ${g.name}`, kcal: Math.min(600, g.ex.reduce((t, x) => t + x.sets, 0) * 9) });
         say(s, `[DUNGEON CLEARED] ${g.name}  +${g.xp} XP`);
         if (g.id === 'prog') {
@@ -76,11 +95,13 @@ function reducer(st, a) {
     case 'leave': s.wk = null; break;
     case 'day': {
       const all = DAILY.every((q) => s.qDone[q.id]);
-      if (all) { s.streak += 1; s.gold += 25; } else { s.streak = 0; s.gold = Math.max(0, s.gold - 30); }
+      let pen = false;
+      if (all) { s.streak += 1; s.gold += 25; } else if (s.shield > 0) { s.shield -= 1; pen = 'shield'; } else { s.streak = 0; s.gold = Math.max(0, s.gold - 30); if (!s.pq) s.pq = { km: 0, target: 2 }; pen = true; }
+      s.hist.push({ vol: s.today.vol, xp: s.today.xp, kcal: Math.round(s.food.reduce((t, f) => t + f.kcal, 0)) }); if (s.hist.length > 6) s.hist.shift(); s.today = { vol: 0, xp: 0 };
       s.archive.push({ food: s.food, exLog: s.exLog, water: s.water, diaryDone: s.diaryDone, goal: target(s) }); if (s.archive.length > 14) s.archive.shift();
       s.sleep.log.push(s.sleep.today); if (s.sleep.log.length > 13) s.sleep.log.shift(); s.sleep.today = null; s.sleep.rest = false;
       Object.assign(s, { qp: {}, qDone: {}, food: [], water: 0, waterDone: false, exLog: [], diaryDone: false, syncedDay: { health: false, watch: false, run: false } });
-      say(s, all ? `[NEW DAY] Streak ${s.streak}. +25 gold` : '[PENALTY] Streak reset, -30 gold.', all ? 'good' : 'bad'); break; }
+      say(s, all ? `[NEW DAY] Streak ${s.streak}. +25 gold` : pen === 'shield' ? '[SHIELD] Your Streak Shield absorbed the penalty.' : '[PENALTY] Streak reset, -30 gold. A penalty quest was issued.', all || pen === 'shield' ? 'good' : 'bad'); break; }
     case 'sleep': {
       const first = !s.sleep.today; s.sleep.today = { h: a.h, q: a.q };
       if (first) { gain(s, 15); if (a.h >= 7) s.rec += 1; say(s, `[SLEEP LOGGED] ${a.h} h  +15 XP${a.h >= 7 ? '  Recovery +1' : ''}`); } else say(s, '[UPDATED] Sleep entry changed', 'info'); break; }
@@ -116,6 +137,19 @@ function reducer(st, a) {
       });
       s.lastSync = Date.now(); say(s, n ? `[SYNC] ${n} source${n === 1 ? '' : 's'} imported (simulated data)` : '[SYNC] Nothing new. Connect a source first, or you are up to date.', n ? 'good' : 'info'); break; }
     case 'tour': s.tour = a.n; break;
+    case 'pqStep': if (!s.pq) break; timeFlags(s); s.pq.km = Math.round((s.pq.km + 0.5) * 10) / 10; if (s.pq.km >= s.pq.target) { s.pq = null; gain(s, 30); logEv(s, 'quest', 'Penalty quest cleared'); say(s, '[PENALTY CLEARED] +30 XP. Fresh start.'); } break;
+    case 'buy': { const it = SHOP.find((x) => x.id === a.id); if (!it || s.gold < it.price) break; s.gold -= it.price; if (it.id === 'booster') s.booster += 5; else s.shield = Math.min(3, s.shield + 1); say(s, `[SHOP] ${it.name} purchased.`); break; }
+    case 'title': if (TITLES.find((x) => x.id === a.id && x.ok(s))) s.title = a.id; break;
+    case 'guildClaim': if (s.guildClaimed || G_BASE + s.c.dungeons < G_GOAL) break; s.guildClaimed = true; s.gold += 150; gain(s, 200); logEv(s, 'guild', 'Guild weekly goal claimed'); say(s, '[GUILD] Weekly goal claimed. +200 XP, +150 gold'); break;
+    case 'lbToggle': s.showLb = !s.showLb; break;
+    case 'dBuild': {
+      const x = a.draft;
+      if (!x.name.trim()) { say(s, '[ERROR] Give your dungeon a name.', 'bad'); break; }
+      if (x.ex.length < 1) { say(s, '[ERROR] Add at least one exercise.', 'bad'); break; }
+      if (s.custom.length >= 6) { say(s, '[LIMIT] You can keep 6 custom dungeons. Delete one first.', 'bad'); break; }
+      s.custom.push({ id: 'cu' + Date.now(), rank: 'MY', name: x.name.trim(), sub: `${x.ex.length} exercises · custom`, minLevel: 1, xp: 40, gold: 20, ex: x.ex });
+      logEv(s, 'dungeon', `Built dungeon: ${x.name.trim()}`); say(s, `[DUNGEON CREATED] ${x.name.trim()}`); break; }
+    case 'dDel': s.custom = s.custom.filter((c) => c.id !== a.id); break;
     case 'clearToast': s.toast = null; return s;
     default: return st;
   }

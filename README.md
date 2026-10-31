@@ -20,3 +20,9 @@ npm run dev
 
 Set `ALLOW_ORIGIN` to your site's origin before deploying. The server has a basic
 per-IP rate limit; add real limits and auth before exposing it publicly.
+
+## Photo meal scan
+Needs the coach server: `ANTHROPIC_API_KEY=... node server/coach.js`, then set `VITE_COACH_URL=http://localhost:8787`. The app posts a shrunk photo to `/photo` and shows the estimate for you to confirm before anything is logged. Without the server the screen explains this and the rest of the app works.
+
+## Not included
+Barcode scanning (needs a camera/barcode library and a food database).

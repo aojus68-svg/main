@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useGame } from './store.js';
 import { LangContext, initialLang, useT } from './i18n.jsx';
 import { Awaken, Dungeons, Fuel, Home, Quests, Voice } from './screens1.jsx';
+import { Photo, Builder, Guild, Log, Shop } from './screens3.jsx';
 import { Body, Coach, Profile, Programs, Recipes, Settings, Sleep, Sync } from './screens2.jsx';
 
-const TAB = { home: 'home', quests: 'quests', fuel: 'fuel', voice: 'fuel', recipes: 'fuel', dungeons: 'dungeons', profile: 'profile', sleep: 'profile', body: 'profile', programs: 'profile', sync: 'profile', settings: 'profile', coach: null };
+const TAB = { home: 'home', quests: 'quests', fuel: 'fuel', voice: 'fuel', recipes: 'fuel', dungeons: 'dungeons', profile: 'profile', sleep: 'profile', body: 'profile', programs: 'profile', sync: 'profile', settings: 'profile', coach: null, log: 'profile', guild: 'profile', shop: 'profile', builder: 'dungeons', photo: 'fuel' };
 const NAV = [['home', 'HOME'], ['quests', 'QUESTS'], ['fuel', 'FUEL'], ['dungeons', 'GATES'], ['profile', 'YOU']];
 
 function Shell() {
@@ -18,7 +19,7 @@ function Shell() {
   const go = (v) => setView(v);
   const ask = () => { setFrom(view); setView('coach'); };
   const props = { s, dispatch, go, lang, from, setLang, theme, setTheme };
-  const screens = { home: Home, quests: Quests, fuel: Fuel, voice: Voice, recipes: Recipes, dungeons: Dungeons, profile: Profile, sleep: Sleep, body: Body, programs: Programs, sync: Sync, settings: Settings, coach: Coach };
+  const screens = { home: Home, quests: Quests, fuel: Fuel, voice: Voice, recipes: Recipes, dungeons: Dungeons, profile: Profile, sleep: Sleep, body: Body, programs: Programs, sync: Sync, settings: Settings, coach: Coach, log: Log, guild: Guild, shop: Shop, builder: Builder, photo: Photo };
   const View = screens[view] || Home;
   return (
     <LangContext.Provider value={lang}>
